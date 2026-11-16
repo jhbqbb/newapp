@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Organic AI: know what's really in it</title>
+<meta name="description" content="Scan any barcode or ingredient list and get a clean score from 0 to 100, every ingredient explained, and a cleaner swap.">
+<meta name="theme-color" content="#ebe9e4">
+<meta property="og:title" content="Organic AI: know what's really in it">
+<meta property="og:description" content="Scan a barcode or a label. Get a clean score, every ingredient explained, and a cleaner swap.">
+<meta property="og:image" content="assets/1-result.jpg">
+<link rel="icon" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ebe9e4;--bg2:#e3e0d9;--card:#f4f3ef;--ink:#151513;--mut:#77746d;--soft:#a9a59c;--rule:#d5d1c8;
+  --green:#1f8f4e;--amber:#b77d0c;--red:#c2392f;
+  --font:"Inter Tight","Helvetica Neue",Helvetica,Arial,system-ui,sans-serif;
+  --ease:cubic-bezier(.22,.8,.2,1);
+}
+*{box-sizing:border-box;margin:0}
+html{-webkit-text-size-adjust:100%;overflow-x:clip}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.5;overflow-x:clip;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+
+/* nav, floating like the reference */
+nav{position:fixed;top:0;left:0;right:0;z-index:40;padding:18px 0;transition:background .4s,padding .4s}
+nav.solid{background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:12px 0}
+nav .wrap{display:flex;align-items:center;gap:26px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:16px;letter-spacing:-.02em}
+.brand img{width:28px;height:28px;border-radius:7px}
+nav .links{margin-left:auto;display:flex;gap:24px;font-size:14px;color:var(--mut)}
+nav .links a{transition:color .2s}nav .links a:hover,nav .links a.on{color:var(--ink)}
+.pill{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 22px;border-radius:999px;background:var(--ink);color:var(--bg);font-weight:500;font-size:15px;border:0;cursor:pointer;transition:transform .3s var(--ease),opacity .3s}
+.pill:hover{transform:scale(1.04)}
+.pill:active{transform:scale(.97)}
+.pill.sm{height:36px;padding:0 16px;font-size:13.5px}
+@media(max-width:820px){nav .links{display:none}nav .pill{margin-left:auto}}
+
+/* the pinned 3D story */
+.stage{position:relative;height:520vh}
+.stage .sticky{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block}
+.fallback{position:absolute;inset:0;display:none;place-items:center}
+.fallback img{width:min(46vw,280px);border-radius:24%;box-shadow:0 40px 80px -40px rgba(0,0,0,.4)}
+.no-gl .fallback{display:grid}
+.scene{position:absolute;left:50%;top:50%;width:min(92vw,820px);transform:translate(-50%,-50%);text-align:center;pointer-events:none;opacity:0}
+.scene.live{pointer-events:auto}
+.eyebrow{font-size:12.5px;color:var(--mut);letter-spacing:.01em;margin-bottom:18px}
+.eyebrow b{font-weight:500;color:var(--ink)}
+.scene h1,.scene h2{font-size:clamp(46px,7.4vw,104px);line-height:.98;letter-spacing:-.055em;font-weight:500}
+.scene p{font-size:clamp(14.5px,1.25vw,17px);color:var(--mut);max-width:440px;margin:22px auto 0;line-height:1.45}
+.scene .pill{margin-top:28px}
+.hint{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);font-size:12.5px;color:var(--mut);display:flex;flex-direction:column;align-items:center;gap:8px;transition:opacity .4s}
+.hint i{width:1px;height:34px;background:linear-gradient(var(--ink),transparent);animation:drip 1.8s var(--ease) infinite;transform-origin:top}
+@keyframes drip{0%{transform:scaleY(0)}60%{transform:scaleY(1);opacity:1}100%{transform:scaleY(1);opacity:0}}
+.counter{position:absolute;right:24px;bottom:28px;font-size:12.5px;color:var(--mut);font-variant-numeric:tabular-nums}
+.bigscore{font-size:clamp(70px,12vw,160px);letter-spacing:-.06em;font-weight:500;line-height:1;font-variant-numeric:tabular-nums}
+.bigscore small{font-size:.28em;color:var(--mut);letter-spacing:-.02em;margin-left:.1em}
+
+section{padding:120px 0}
+.label{font-size:12.5px;color:var(--mut);margin-bottom:16px}
+h2.big{font-size:clamp(38px,5.6vw,76px);line-height:1;letter-spacing:-.05em;font-weight:500;max-width:880px}
+.lead{font-size:clamp(16px,1.4vw,19px);color:var(--mut);max-width:520px;margin-top:18px;line-height:1.5}
+.reveal{opacity:0;transform:translateY(28px);filter:blur(6px);transition:opacity 1s var(--ease),transform 1.1s var(--ease),filter 1s var(--ease)}
+.reveal.in{opacity:1;transform:none;filter:none}
+
+/* phone tour */
+.tour{display:grid;grid-template-columns:1fr 1fr;gap:56px;margin-top:64px}
+.tour .pin{position:sticky;top:90px;height:calc(100vh - 120px);max-height:780px;display:grid;place-items:center;background:var(--card);border-radius:32px}
+.phone{position:relative;aspect-ratio:1320/2868;background:#141414;border-radius:38px;padding:7px;box-shadow:0 50px 90px -50px rgba(0,0,0,.55)}
+.tour .phone{height:min(600px,calc(100vh - 190px))}
+.screens{position:relative;width:100%;height:100%;border-radius:31px;overflow:hidden;background:#fff}
+.screens img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;opacity:0;filter:blur(8px);transform:scale(1.03);transition:opacity .6s var(--ease),filter .6s var(--ease),transform .8s var(--ease)}
+.screens img.on{opacity:1;filter:none;transform:none}
+.pin .num{position:absolute;left:24px;top:22px;font-size:12.5px;color:var(--mut);font-variant-numeric:tabular-nums}
+.steps .st{min-height:76vh;display:flex;flex-direction:column;justify-content:center;opacity:.22;filter:blur(2px);transition:opacity .5s var(--ease),filter .5s var(--ease)}
+.steps .st.on{opacity:1;filter:none}
+.st small{font-size:12.5px;color:var(--mut)}
+.st h3{font-size:clamp(32px,3.6vw,52px);letter-spacing:-.05em;line-height:1;font-weight:500;margin-top:12px}
+.st p{color:var(--mut);font-size:17px;margin-top:16px;max-width:420px;line-height:1.5}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:var(--card);font-size:14px;color:var(--ink)}
+.chip i{width:8px;height:8px;border-radius:50%;flex:none}
+.chip b{font-weight:600;font-variant-numeric:tabular-nums}
+@media(max-width:860px){
+  .tour{grid-template-columns:1fr;gap:0;margin-top:36px}
+  .tour .pin{top:62px;height:auto;max-height:none;padding:18px 0;z-index:3;border-radius:24px;box-shadow:0 10px 30px -18px rgba(0,0,0,.3)}
+  .tour .phone{height:min(40vh,360px);border-radius:30px;padding:6px}.screens{border-radius:25px}
+  .pin .num{left:16px;top:14px}
+  .steps .st{min-height:58vh;justify-content:flex-start;padding-top:9vh}
+}
+
+/* features */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:56px}
+.card{background:var(--card);border-radius:28px;padding:28px;min-height:250px;display:flex;flex-direction:column;transition:transform .5s var(--ease),background .4s}
+.card:hover{transform:translateY(-6px);background:#f8f7f4}
+.card .k{font-size:12.5px;color:var(--mut)}
+.card h3{font-size:24px;letter-spacing:-.035em;font-weight:500;margin-top:auto;line-height:1.1}
+.card p{color:var(--mut);font-size:15px;margin-top:10px}
+.card.wide{grid-column:span 2}
+@media(max-width:860px){.grid{grid-template-columns:1fr}.card.wide{grid-column:auto}.card{min-height:200px}}
+
+/* score demo */
+.score{display:grid;grid-template-columns:auto 1fr;gap:64px;align-items:center;background:var(--card);border-radius:36px;padding:56px;margin-top:56px}
+.ring{position:relative;width:250px;height:250px}
+.ring svg{transform:rotate(-90deg);width:100%;height:100%}
+.ring circle{fill:none;stroke-width:12;stroke-linecap:round}
+.ring .t{stroke:var(--rule)}
+.ring .v{stroke:var(--green);stroke-dasharray:597;stroke-dashoffset:597;transition:stroke-dashoffset 1.6s var(--ease),stroke .4s}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:86px;font-weight:500;letter-spacing:-.06em;font-variant-numeric:tabular-nums}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.tabs button{font:inherit;font-size:14px;padding:10px 16px;border-radius:999px;border:0;background:var(--bg);color:var(--ink);cursor:pointer;transition:background .25s,color .25s,transform .2s}
+.tabs button.on{background:var(--ink);color:var(--bg)}
+.tabs button:active{transform:scale(.95)}
+.bars{margin-top:28px;display:grid;gap:16px;max-width:500px}
+.bar{display:grid;grid-template-columns:110px 1fr 36px;gap:14px;align-items:center;font-size:14.5px}
+.bar u{height:5px;border-radius:5px;background:var(--rule);overflow:hidden;text-decoration:none}
+.bar u s{display:block;height:100%;width:0;border-radius:5px;background:var(--green);transition:width 1.3s var(--ease) .15s,background .3s}
+.bar b{font-weight:500;text-align:right;font-variant-numeric:tabular-nums}
+@media(max-width:860px){.score{grid-template-columns:1fr;gap:28px;padding:30px 22px;border-radius:28px}.ring{width:190px;height:190px;margin:auto}.ring b{font-size:64px}.bar{grid-template-columns:92px 1fr 30px;font-size:14px}}
+
+/* pricing */
+.plans{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:56px;max-width:900px}
+.plan{background:var(--card);border-radius:32px;padding:34px;transition:transform .5s var(--ease)}
+.plan:hover{transform:translateY(-6px)}
+.plan.pro{background:var(--ink);color:var(--bg)}
+.plan .k{font-size:13px;display:flex;justify-content:space-between;align-items:center}
+.plan .k span{font-size:12px;padding:5px 10px;border-radius:999px;background:var(--bg);color:var(--ink)}
+.plan .price{font-size:clamp(52px,6vw,76px);font-weight:500;letter-spacing:-.06em;line-height:1;margin:26px 0 6px}
+.plan .price small{font-size:16px;letter-spacing:0;opacity:.6}
+.plan ul{list-style:none;padding:0;margin:26px 0 0;display:grid;gap:12px;font-size:15.5px}
+.plan li{display:flex;gap:10px;align-items:baseline}
+.plan li::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.5;flex:none;transform:translateY(-2px)}
+@media(max-width:760px){.plans{grid-template-columns:1fr}}
+
+/* faq */
+.faq{margin-top:44px;max-width:860px}
+details{border-top:1px solid var(--rule)}
+details:last-child{border-bottom:1px solid var(--rule)}
+summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:20px;padding:24px 0;font-size:clamp(18px,1.8vw,22px);letter-spacing:-.025em;font-weight:500}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-weight:300;font-size:26px;line-height:1;color:var(--mut);transition:transform .35s var(--ease)}
+details[open] summary::after{transform:rotate(45deg)}
+details p{color:var(--mut);padding:0 0 24px;max-width:720px;font-size:16px}
+
+/* closing */
+.end{text-align:center;padding:150px 0 90px}
+.end h2{font-size:clamp(44px,8vw,120px);line-height:.95;letter-spacing:-.06em;font-weight:500;max-width:1000px;margin:0 auto}
+.end p{color:var(--mut);margin:22px auto 0;max-width:420px}
+.end .pill{margin-top:30px}
+.wordmark{font-size:clamp(70px,19vw,300px);letter-spacing:-.07em;line-height:.8;font-weight:500;text-align:center;color:var(--bg2);user-select:none;white-space:nowrap;overflow:hidden}
+footer{font-size:13px;color:var(--mut);padding:26px 0 calc(30px + env(safe-area-inset-bottom))}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 28px;border-top:1px solid var(--rule);padding-top:22px}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none;filter:none}}
+</style>
+</head>
+<body>
+<nav id="nav"><div class="wrap">
+  <a class="brand" href="#top"><img src="assets/icon.png" alt="">Organic AI</a>
+  <div class="links"><a href="#how">How it works</a><a href="#features">Features</a><a href="#score">The score</a><a href="#pricing">Pricing</a></div>
+  <a class="pill sm" href="#get">Get the app</a>
+</div></nav>
+
+<!-- the pinned 3D story: a soft ring that breaks into its ingredients and comes back together as a score -->
+<div class="stage" id="top">
+  <div class="sticky">
+    <canvas id="gl" aria-hidden="true"></canvas>
+    <div class="fallback"><img src="assets/icon.png" alt=""></div>
+    <div class="scene" data-from="0" data-to=".2">
+      <p class="eyebrow">Organic AI <b>·</b> For iPhone</p>
+      <h1>Know what's<br>really in it.</h1>
+      <p>Scan any barcode or ingredient list and get one clean score, with every ingredient explained.</p>
+      <a class="pill" href="#get">Get the app</a>
+    </div>
+    <div class="scene" data-from=".26" data-to=".46">
+      <p class="eyebrow">The breakdown</p>
+      <h2>Every ingredient,<br>taken apart.</h2>
+      <p>Dyes, fillers, sweeteners, oils. Each one gets a verdict and one plain sentence on why.</p>
+    </div>
+    <div class="scene" data-from=".52" data-to=".72">
+      <p class="eyebrow">The score</p>
+      <div class="bigscore"><span id="bignum">0</span><small>/100</small></div>
+      <h2 style="font-size:clamp(30px,4vw,54px);margin-top:10px">Put back together<br>as one number.</h2>
+    </div>
+    <div class="scene" data-from=".78" data-to="1.01">
+      <p class="eyebrow">The swap</p>
+      <h2>A cleaner pick,<br>one scan away.</h2>
+      <p>When something scores low, you see a better product of the same kind.</p>
+      <a class="pill" href="#how">See how it works</a>
+    </div>
+    <div class="hint" id="hint">Scroll<i></i></div>
+    <div class="counter" id="sceneCount">01 / 04</div>
+  </div>
+</div>
+
+<section id="how"><div class="wrap">
+  <p class="label reveal">How it works</p>
+  <h2 class="big reveal">From label to verdict in a few taps.</h2>
+  <div class="tour">
+    <div class="pin">
+      <span class="num"><span id="count">01</span> / 05</span>
+      <div class="phone"><div class="screens" id="screens">
+        <img class="on" src="assets/2-scan.jpg" alt="Scanning a barcode">
+        <img src="assets/1-result.jpg" alt="A clean score with the reasons behind it" loading="lazy">
+        <img src="assets/3-ingredients.jpg" alt="Every ingredient marked fine, limit or avoid" loading="lazy">
+        <img src="assets/4-swaps.jpg" alt="Cleaner swaps with their scores" loading="lazy">
+        <img src="assets/5-home.jpg" alt="Home screen with streak, level and weekly challenge" loading="lazy">
+      </div></div>
+    </div>
+    <div class="steps" id="steps">
+      <div class="st on"><small>01</small><h3>Scan anything.</h3><p>Point at a barcode, photograph the ingredient list, or type a product name. Labels are read right on your iPhone.</p></div>
+      <div class="st"><small>02</small><h3>One clear score.</h3><p>A number from 0 to 100, with the three reasons behind it: the ingredients, how processed it is, and its nutrition grade.</p></div>
+      <div class="st"><small>03</small><h3>Every ingredient, explained.</h3><p>No more guessing what maltodextrin or E150d is doing in your snack.</p>
+        <div class="chips"><span class="chip"><i style="background:var(--green)"></i>Fine</span><span class="chip"><i style="background:var(--amber)"></i>Limit</span><span class="chip"><i style="background:var(--red)"></i>Avoid</span></div></div>
+      <div class="st"><small>04</small><h3>Find a cleaner swap.</h3><p>A better product of the same kind, saved to your shopping list with one tap.</p>
+        <div class="chips"><span class="chip">Nacho chips <b style="color:var(--red)">33</b></span><span class="chip">Corn &amp; salt chips <b style="color:var(--green)">78</b></span></div></div>
+      <div class="st"><small>05</small><h3>Build the habit.</h3><p>A daily goal, streaks, levels and one weekly challenge, until reading labels is second nature.</p></div>
+    </div>
+  </div>
+</div></section>
+
+<section id="features" style="padding-top:40px"><div class="wrap">
+  <p class="label reveal">Features</p>
+  <h2 class="big reveal">Personal from the first scan.</h2>
+  <p class="lead reveal">Tell it what you care about once. Every result is checked against it.</p>
+  <div class="grid">
+    <div class="card wide reveal"><span class="k">Watch list</span><h3>Added sugar, dyes, palm oil, sweeteners.</h3><p>Pick what you avoid and it is highlighted on every product you scan.</p></div>
+    <div class="card reveal"><span class="k">Diets and allergies</span><h3>Fits your plate.</h3><p>Flags what does not fit. For allergies, always read the pack yourself too.</p></div>
+    <div class="card reveal"><span class="k">Privacy</span><h3>Photos stay on your iPhone.</h3><p>Labels are read on the device. Your data lives in your own iCloud.</p></div>
+    <div class="card reveal"><span class="k">Pro</span><h3>Compare two products.</h3><p>Side by side, before you buy.</p></div>
+    <div class="card reveal"><span class="k">Pro</span><h3>Weekly insights.</h3><p>Your average score per day, against your target.</p></div>
+  </div>
+</div></section>
+
+<section id="score" style="padding-top:40px"><div class="wrap">
+  <p class="label reveal">The score</p>
+  <h2 class="big reveal">One number. Three reasons.</h2>
+  <div class="score reveal" id="scorebox">
+    <div class="ring"><svg viewBox="0 0 240 240"><circle class="t" cx="120" cy="120" r="95"/><circle class="v" id="ringv" cx="120" cy="120" r="95"/></svg><b id="ringn">0</b></div>
+    <div>
+      <p style="color:var(--mut);margin-bottom:18px;max-width:440px">The clean score blends the ingredients, how processed the product is, and its nutrition grade. Pick a product:</p>
+      <div class="tabs" id="tabs"></div>
+      <div class="bars">
+        <div class="bar"><span>Ingredients</span><u><s id="b1"></s></u><b id="n1">0</b></div>
+        <div class="bar"><span>Processing</span><u><s id="b2"></s></u><b id="n2">0</b></div>
+        <div class="bar"><span>Nutrition</span><u><s id="b3"></s></u><b id="n3">–</b></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<section id="pricing" style="padding-top:40px"><div class="wrap">
+  <p class="label reveal">Pricing</p>
+  <h2 class="big reveal">Free to start. Pro when you want more.</h2>
+  <div class="plans">
+    <div class="plan reveal"><div class="k">Free</div><div class="price">$0</div><p style="opacity:.6">No account needed</p>
+      <ul><li>3 scans a day</li><li>Clean score and every ingredient</li><li>The first cleaner swap</li><li>Streaks, levels and badges</li></ul></div>
+    <div class="plan pro reveal"><div class="k">Pro <span>3 days free</span></div><div class="price">$29.99 <small>/ year</small></div><p style="opacity:.6">or $7.99 a month</p>
+      <ul><li>Unlimited scans</li><li>Every cleaner swap</li><li>Weekly insights</li><li>Compare two products</li><li>2 streak freezes a week</li></ul></div>
+  </div>
+  <p class="label reveal" style="margin-top:18px">Prices in US dollars; the App Store shows your local price.</p>
+</div></section>
+
+<section id="faq" style="padding-top:40px"><div class="wrap">
+  <p class="label reveal">Questions</p>
+  <h2 class="big reveal">Good to know.</h2>
+  <div class="faq">
+    <details class="reveal"><summary>Where does the product data come from?</summary><p>Barcode lookups and product search use Open Food Facts, an open database maintained by volunteers. Photos of a label are read on your iPhone and checked against the ingredient database built into the app.</p></details>
+    <details class="reveal"><summary>Is my data private?</summary><p>Your scans and plan stay on your iPhone and, if you use iCloud, in your own private iCloud. A barcode lookup sends only the barcode number. Label photos never leave your device.</p></details>
+    <details class="reveal"><summary>Is this medical advice?</summary><p>No. Scores and flags are estimates to help you compare products. If you have an allergy or a medical condition, always read the package yourself.</p></details>
+    <details class="reveal"><summary>What if a product is not in the database?</summary><p>Take a photo of the ingredient list or type it in. The app scores it from the ingredients alone.</p></details>
+  </div>
+</div></section>
+
+<div class="end" id="get"><div class="wrap">
+  <p class="label reveal">Coming soon to the App Store</p>
+  <h2 class="reveal">Your next grocery run is just a scan away.</h2>
+  <p class="reveal">The download link goes here once the app is live.</p>
+  <span class="pill reveal" aria-disabled="true">Coming soon</span>
+</div></div>
+<div class="wordmark" aria-hidden="true">Organic AI</div>
+<footer><div class="wrap"><span>© <span id="year"></span> Organic AI</span><span>Product data: Open Food Facts (ODbL)</span><span>Not medical advice</span></div></footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const mobile=innerWidth<760;
+document.getElementById('year').textContent=new Date().getFullYear();
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const ease=x=>1-Math.pow(1-clamp(x),3);
+const inOut=x=>{x=clamp(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2};
+
+// --- 3D: a soft, gathered ring (like the app's score ring) that breaks apart and reassembles ---
+const stage=document.querySelector('.stage'),canvas=document.getElementById('gl');
+let gl3=null;
+try{
+  if(!window.THREE)throw 0;
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.outputEncoding=THREE.sRGBEncoding;
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(32,1,.1,100);camera.position.set(0,0,9);
+  scene.add(new THREE.HemisphereLight(0xffffff,0xbdb6a8,.85));
+  const key=new THREE.DirectionalLight(0xffffff,.9);key.position.set(-4,5,6);scene.add(key);
+  const rim=new THREE.DirectionalLight(0xfff6e8,.35);rim.position.set(5,-2,-3);scene.add(rim);
+  const mat=new THREE.MeshStandardMaterial({color:0xf3f1ec,roughness:.92,metalness:0});
+
+  // ring with soft gathers along the tube, like ruched fabric
+  const R=1.55,r=.72;
+  const geo=new THREE.TorusGeometry(R,r,mobile?90:150,mobile?220:360);
+  const pos=geo.attributes.position,v=new THREE.Vector3(),c=new THREE.Vector3(),n=new THREE.Vector3(),radial=new THREE.Vector3();
+  for(let i=0;i<pos.count;i++){
+    v.fromBufferAttribute(pos,i);
+    const u=Math.atan2(v.y,v.x);c.set(Math.cos(u)*R,Math.sin(u)*R,0);n.copy(v).sub(c);
+    radial.set(Math.cos(u),Math.sin(u),0);
+    const w=Math.atan2(n.z,n.dot(radial));
+    // soft, uneven gathers: a few large folds plus smaller creases that drift around the tube
+    const d=.05*Math.sin(u*9+Math.sin(w*1.3+u*2)*1.8)*(0.55+0.45*Math.cos(w))
+           +.022*Math.sin(u*23+w*1.7+Math.sin(u*3)*2)
+           +.012*Math.sin(u*47-w*2.3)*Math.cos(w*.5)
+           +.03*Math.sin(u*3+1.2);
+    n.normalize().multiplyScalar(d);v.add(n);pos.setXYZ(i,v.x,v.y,v.z);
+  }
+  geo.computeVertexNormals();
+  const ring=new THREE.Mesh(geo,mat);
+  const group=new THREE.Group();group.add(ring);scene.add(group);
+
+  // shards: flat irregular pieces sitting on the ring's surface
+  const N=mobile?160:320;
+  const shardGeo=new THREE.TetrahedronGeometry(.2,0);shardGeo.scale(1,.32,1.25);
+  const shards=new THREE.InstancedMesh(shardGeo,mat,N);shards.visible=false;group.add(shards);
+  const home=[],dir=[],spin=[],size=[];
+  for(let i=0;i<N;i++){
+    const u=Math.random()*Math.PI*2,w=Math.random()*Math.PI*2;
+    const p=new THREE.Vector3((R+r*Math.cos(w))*Math.cos(u),(R+r*Math.cos(w))*Math.sin(u),r*Math.sin(w));
+    home.push(p);
+    const out=p.clone().sub(new THREE.Vector3(Math.cos(u)*R,Math.sin(u)*R,0)).normalize();
+    dir.push(out.multiplyScalar(1.6+Math.random()*3.2).add(new THREE.Vector3((Math.random()-.5)*2,(Math.random()-.2)*2.2,(Math.random()-.5)*2)));
+    spin.push(new THREE.Euler(Math.random()*6,Math.random()*6,Math.random()*6));size.push(.6+Math.random()*1.1);
+  }
+  const m=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler(),sc=new THREE.Vector3(),pp=new THREE.Vector3();
+
+  function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();camera.position.z=w<h?14:10.2}
+  addEventListener('resize',resize);resize();
+
+  let t0=performance.now(),visible=true,mx=0,my=0;
+  new IntersectionObserver(es=>visible=es[0].isIntersecting).observe(stage);
+  addEventListener('pointermove',ev=>{mx=ev.clientX/innerWidth-.5;my=ev.clientY/innerHeight-.5},{passive:true});
+  gl3={render(s){
+    const t=(performance.now()-t0)/1000;
+    // 0-.22 hero: ring tilts toward the viewer; .22-.42 break apart; .5-.7 reassemble; .76-.96 settle face-on
+    const breakP=inOut((s-.22)/.2),backP=inOut((s-.5)/.2),settle=inOut((s-.76)/.2);
+    const spread=breakP*(1-backP);
+    group.rotation.x=-.95+ease(s/.2)*.55+settle*.4+my*.12+(reduce?0:Math.sin(t*.4)*.03);
+    group.rotation.y=.35-s*1.4+settle*1.05+mx*.18;
+    group.rotation.z=(reduce?0:t*.06)+s*1.6;
+    group.scale.setScalar(1-.08*spread+settle*.06);
+    group.position.y=mobile?-.25:0;
+    if(spread<.002){ring.visible=true;shards.visible=false}
+    else{
+      ring.visible=false;shards.visible=true;
+      for(let i=0;i<N;i++){
+        pp.copy(home[i]).addScaledVector(dir[i],spread);
+        e.set(spin[i].x*spread*2,spin[i].y*spread*2+t*.2*spread,spin[i].z*spread);q.setFromEuler(e);
+        const k=size[i]*(spread<.2?.6+spread*2:1);sc.set(k,k,k);
+        m.compose(pp,q,sc);shards.setMatrixAt(i,m);
+      }
+      shards.instanceMatrix.needsUpdate=true;
+    }
+    renderer.render(scene,camera);
+  },get visible(){return visible}};
+}catch(err){document.querySelector('.sticky').classList.add('no-gl')}
+
+// --- scroll: scenes, counter, nav, tour, reveals ---
+const scenes=[...document.querySelectorAll('.scene')],hint=document.getElementById('hint'),sceneCount=document.getElementById('sceneCount'),bignum=document.getElementById('bignum');
+const nav=document.getElementById('nav');
+const steps=[...document.querySelectorAll('#steps .st')],screens=[...document.querySelectorAll('#screens img')],count=document.getElementById('count');
+const links=[...document.querySelectorAll('nav .links a')];
+let active=-1;
+function stageProgress(){const r=stage.getBoundingClientRect();return clamp(-r.top/(r.height-innerHeight))}
+function frame(){
+  const s=stageProgress();
+  scenes.forEach((el,i)=>{
+    const a=+el.dataset.from,b=+el.dataset.to,fade=.06;
+    let o=clamp((s-a)/fade)*(1-clamp((s-(b-fade))/fade));
+    if(i===0)o=1-clamp((s-(b-fade))/fade);
+    if(i===scenes.length-1)o=clamp((s-a)/fade);
+    const y=(1-o)*(s<a+fade?24:-24);
+    el.style.opacity=o;el.style.filter=o>.99?'none':`blur(${(1-o)*12}px)`;el.style.transform=`translate(-50%,calc(-50% + ${y}px))`;
+    el.classList.toggle('live',o>.6);
+    if(o>.5)sceneCount.textContent=`0${i+1} / 04`;
+  });
+  bignum.textContent=Math.round(ease((s-.52)/.16)*98);
+  hint.style.opacity=1-clamp(s/.05);
+  nav.classList.toggle('solid',scrollY>stage.offsetHeight-innerHeight-40);
+  if(gl3&&gl3.visible)gl3.render(s);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+function onScroll(){
+  const vh=innerHeight;
+  const line=vh*(innerWidth<860?.72:.48);let best=0,dist=1e9;
+  steps.forEach((st,i)=>{const b=st.getBoundingClientRect();const d=Math.abs(b.top+Math.min(b.height,vh*.35)/2-line);if(d<dist){dist=d;best=i}});
+  if(best!==active){active=best;steps.forEach((st,j)=>st.classList.toggle('on',j===best));screens.forEach((im,j)=>im.classList.toggle('on',j===best));count.textContent=String(best+1).padStart(2,'0')}
+  let current='';['how','features','score','pricing'].forEach(id=>{if(document.getElementById(id).getBoundingClientRect().top<vh*.4)current=id});
+  links.forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+current));
+  document.querySelectorAll('.reveal:not(.in)').forEach(el=>{const b=el.getBoundingClientRect();if(b.top<vh*.92&&b.bottom>0)el.classList.add('in')});
+  checkScore();
+}
+addEventListener('scroll',onScroll,{passive:true});addEventListener('resize',onScroll);addEventListener('load',onScroll);
+document.querySelectorAll('.grid,.plans,.faq').forEach(g=>[...g.children].forEach((ch,i)=>ch.style.transitionDelay=(i*.07)+'s'));
+
+// --- score demo ---
+const data=[['Nacho chips',33,40,22,null],['Greek yogurt',98,100,100,100],['Hazelnut spread',32,68,62,12],['Wholemeal bread',85,100,62,null]];
+const col=sc=>sc>=70?'var(--green)':sc>=45?'var(--amber)':'var(--red)';
+const ringv=document.getElementById('ringv'),ringn=document.getElementById('ringn');let cur=0,raf,started=false;
+function show(i){const[,sc,a,b,c]=data[i];ringv.style.stroke=col(sc);ringv.style.strokeDashoffset=597*(1-sc/100);
+  [[a,'1'],[b,'2'],[c,'3']].forEach(([val,k])=>{const bar=document.getElementById('b'+k);bar.style.width=(val??0)+'%';bar.style.background=val==null?'transparent':col(val);document.getElementById('n'+k).textContent=val??'–'});
+  cancelAnimationFrame(raf);const from=cur,t0=performance.now();(function step(t){const p=Math.min(1,(t-t0)/1300);cur=Math.round(from+(sc-from)*ease(p));ringn.textContent=cur;if(p<1)raf=requestAnimationFrame(step)})(t0);
+  document.querySelectorAll('#tabs button').forEach((b,j)=>{b.classList.toggle('on',j===i);b.setAttribute('aria-pressed',j===i)})}
+const tabs=document.getElementById('tabs');data.forEach((d,i)=>{const b=document.createElement('button');b.type='button';b.textContent=d[0];b.onclick=()=>show(i);tabs.appendChild(b)});
+function checkScore(){if(started)return;const r=document.getElementById('scorebox').getBoundingClientRect();if(r.top<innerHeight*.75&&r.bottom>0){started=true;show(0)}}
+onScroll();
+</script>
+</body>
+</html>
